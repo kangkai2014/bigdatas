@@ -2,3 +2,9 @@
 /bigdata.log
 /build.log
 /classes/
+/velocity.log
+/.settings/
+/.classpath
+/.project
+/bin/
+/build/

@@ -11,11 +11,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.apache.hadoop.fs.Path;
-import org.apache.log4j.Logger;
 import org.frameworkset.bigdata.imp.monitor.TaskStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FileSegment {
-	 private static Logger log = Logger.getLogger(FileSegment.class);
+	 private static Logger log = LoggerFactory.getLogger(FileSegment.class);
 	 boolean closed;
 	 boolean flushed;
 	 ExecutorJob job;
@@ -47,6 +48,16 @@ public class FileSegment {
 		 errormessage.append(errormsg).append("\r\n");
 		 return errormessage;
 	 }
+	 
+	 public boolean dateRange()
+	 {
+		 return Imp.dateRange(this.job.config.getPktype()); 
+	 }
+	 
+	 public boolean timestampRange()
+	 {
+		 return Imp.timestampRange(this.job.config.getPktype()); 
+	 }
 	 public boolean handleerrormsgs()
 	 {
 		 if( errormessage != null && errormessage.length() > 0)
@@ -74,6 +85,10 @@ public class FileSegment {
 	 {
 		 return job.config.isUsepartition();
 	 }
+	 public boolean partitiondataraged()
+	 {
+		 return job.config.isPartitiondataraged();
+	 }
 	 public boolean usepagine()
 	 {
 		 return this.job.usepagine();
@@ -86,16 +101,87 @@ public class FileSegment {
 			return this.job.config.getPageinestatement();
 		}
 	 public String getQuerystatement() {
-		 if(!this.usepartition())
-			 return this.job.config.getQuerystatement();
-		 else
+		 StringBuilder builder = new StringBuilder();
+		 boolean appended = false;
+		 if(this.job.config.isOnejob() || this.job.config.isUsepagine())
 		 {
-			 if(!taskInfo.isIssubpartition())
-				 return this.job.config.getQuerystatement().replace("#{partition}", " PARTITION  ("+taskInfo.getPartitionName()+")");
-			 else
-				 return this.job.config.getQuerystatement().replace("#{partition}", " SUBPARTITION  ("+taskInfo.getSubpartition()+")");
+			 builder.append(this.job.config.getQuerystatement());
+			 return builder.toString();
 		 }
-		}
+		 else if(this.usepartition())		 
+		 {
+			
+			 if(!taskInfo.isIssubpartition())
+				 builder.append(this.job.config.getQuerystatement().replace("#{partition}", " PARTITION  ("+taskInfo.getPartitionName()+")"));
+			 else
+				 builder.append(this.job.config.getQuerystatement().replace("#{partition}", " SUBPARTITION  ("+taskInfo.getSubpartition()+")"));
+			
+			 appended = true;
+			 if(!this.job.config.isPartitiondataraged())
+			 {
+				 return builder.toString();
+			 }
+		 }
+		 if(!appended)
+		 {
+			 builder.append(this.job.config.getQuerystatement());
+		 }
+		 if(Imp.numberRange(job.config.getPktype()))
+		 {		 
+			
+			 builder.append(" where ")
+					.append(this.job.config.pkname).append("<=? and ")
+					.append(this.job.config.pkname).append(">=?");				 
+			
+		 }
+		 else
+		 { 
+			 if(!this.taskInfo.isSubblock())
+			 {
+				 if(!this.taskInfo.isLasted())
+				 {
+					 builder.append(" where ")
+						.append(this.job.config.pkname).append("<? and ")
+						.append(this.job.config.pkname).append(">=?");
+				 }
+				 else
+				 {
+					 builder.append(" where ")
+						.append(this.job.config.pkname).append("<=? and ")
+						.append(this.job.config.pkname).append(">=?");
+				 }
+			 }
+			 else
+			 {
+				 if(!this.taskInfo.isLasted())
+				 {
+					 builder.append(" where ")
+						.append(this.job.config.pkname).append("<? and ")
+						.append(this.job.config.pkname).append(">=?");
+				 }
+				 else
+				 {
+					 if(!this.taskInfo.isSublasted())
+					 {
+						 builder.append(" where ")
+							.append(this.job.config.pkname).append("<? and ")
+							.append(this.job.config.pkname).append(">=?");
+					 }
+					 else
+					 {
+						 builder.append(" where ")
+							.append(this.job.config.pkname).append("<=? and ")
+							.append(this.job.config.pkname).append(">=?");
+					 }
+				 
+				 }
+			 }
+			
+		 }
+		 String sql = builder.toString();		
+		
+		 return sql;
+	}
 	 
 	 
 	 public String getSubQuerystatement() {
@@ -121,8 +207,22 @@ public class FileSegment {
 		 StringBuilder builder = new StringBuilder();
 		 builder.append("taskNo=").append(taskInfo.taskNo).append(",").append("filename=").append(taskInfo.filename).append(",")
 			.append("pagesize=").append(taskInfo.pagesize).append(",")
-			.append("start=").append(taskInfo.startoffset).append(",")
-			.append("end=").append(taskInfo.endoffset).append(",");
+			;
+		 
+		 if(Imp.numberRange(job.config.getPktype()))
+			 builder.append("start=").append(taskInfo.startoffset).append(",")
+				.append("end=").append(taskInfo.endoffset).append(",");
+		 else
+		 {
+			 Date startdate = Imp.getDateTime(job.config.getPktype(), taskInfo.startoffset);
+			 Date enddate = Imp.getDateTime(job.config.getPktype(), taskInfo.endoffset);
+			
+			 builder.append("start=").append(format.format(startdate)).append(",")
+				.append("end=").append(format.format(enddate)).append(",lasted=").append(taskInfo.lasted);
+			 if(taskInfo.subblock)
+				 builder.append(",sublasted=").append(taskInfo.sublasted);
+			 builder.append(",querystatement=").append(this.getQuerystatement()).append(",");
+		 }
 		 if(taskInfo.getSubpartition() != null)
 		 {
 			 builder.append("subpartition=").append(taskInfo.getSubpartition()).append(",");

@@ -22,7 +22,10 @@ public class TaskConfig implements java.io.Serializable{
 	 * 使用表的分区进行任务切割
 	 */
 	private boolean usepartition;
+	
+	private boolean partitiondataraged;
 	private String partitions;
+	private String querypartitionstmt;
 	private String excludepartitions;
 	private boolean usesubpartition = true;
 	private String leftJoinby;
@@ -50,6 +53,7 @@ public class TaskConfig implements java.io.Serializable{
 	String tablename;
 	String columns;
 	String pkname;
+	String pktype;
 	int datablocks;
 	String hdfsserver;
 	String hdfsdatadirpath;
@@ -65,6 +69,7 @@ public class TaskConfig implements java.io.Serializable{
 	boolean genlocalfile;
 	String datatype;
 	private String querystatement;
+	int fetchsize;
 	/**
 	 * 作业任务最大允许错误行数，如果超过这个错误行数，则强制终止作业执行
 	 */
@@ -91,6 +96,10 @@ public class TaskConfig implements java.io.Serializable{
 	 * 指定要停止的数据源清单，多个用逗号分隔
 	 */
 	private String stopdbnames;
+	private String addworkthreads;
+	
+	private String adjustJobname;
+
 	/**
 	 * 当指定了具体的任务处理数据块blocks，则可以设定每块可以直接拆分的子数据块这样可以提升系统处理速度
 	 */
@@ -115,12 +124,16 @@ public class TaskConfig implements java.io.Serializable{
 		.append("leftjoinby=").append(this.leftJoinby).append(",")
 		.append("rightJoinby=").append(this.rightJoinby).append(",")
 		.append("errorrowslimit=").append(this.errorrowslimit).append(",")
-		
+		.append("fetchsize=").append(this.fetchsize).append(",")
 		.append("usepartition=").append(this.usepartition).append(",");
 		if(this.usepartition)
 		{
 			builder.append("excludepartitions=").append(this.excludepartitions).append(",")
 			.append("partitions=").append(this.partitions).append(",");
+			if(this.querypartitionstmt != null)
+			{
+				builder.append("querypartitionstmt=").append(this.querypartitionstmt).append(",");
+			}
 		}
 		
 		if(driver != null && driver.trim().length() > 0)
@@ -550,5 +563,51 @@ public class TaskConfig implements java.io.Serializable{
 	public void setUsesubpartition(boolean usesubpartition) {
 		this.usesubpartition = usesubpartition;
 	}
+	public boolean isPartitiondataraged() {
+		return partitiondataraged;
+	}
+	public void setPartitiondataraged(boolean partitiondataraged) {
+		this.partitiondataraged = partitiondataraged;
+	}
+	public String getPktype() {
+		return pktype;
+	}
+	public void setPktype(String pktype) {
+		this.pktype = pktype;
+	}
+	public String getAddworkthreads() {
+		return addworkthreads;
+	}
+	public void setAddworkthreads(String addworkthreads) {
+		this.addworkthreads = addworkthreads;
+	}
+	public String getAdjustJobname() {
+		return adjustJobname;
+	}
+	public void setAdjustJobname(String adjustJobname) {
+		this.adjustJobname = adjustJobname;
+	}
+	public String getQuerypartitionstmt() {
+		return querypartitionstmt;
+	}
+	public void setQuerypartitionstmt(String querypartitionstmt) {
+		this.querypartitionstmt = querypartitionstmt;
+	}
+	public int getFetchsize() {
+		return fetchsize;
+	}
+	public void setFetchsize(int fetchsize) {
+		this.fetchsize = fetchsize;
+	}
+	
+//	 public boolean dateRange()
+//	 {
+//		 return getPktype() != null && getPktype().equals("date"); 
+//	 }
+//	 
+//	 public boolean timestampRange()
+//	 {
+//		 return getPktype() != null && getPktype().equals("timestamp"); 
+//	 }
 }
 

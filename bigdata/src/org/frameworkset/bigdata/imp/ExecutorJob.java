@@ -8,15 +8,16 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.log4j.Logger;
 import org.frameworkset.bigdata.imp.monitor.JobStatic;
 import org.frameworkset.bigdata.imp.monitor.TaskStatus;
 import org.frameworkset.bigdata.util.DBHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.frameworkset.util.SimpleStringUtil;
 
 public class ExecutorJob {
-	private static Logger log = Logger.getLogger(ExecutorJob.class); 
+	private static Logger log = LoggerFactory.getLogger(ExecutorJob.class); 
 	 private BlockingQueue<FileSegment> genfileQueues = null; 
 	 private BlockingQueue<FileSegment> upfileQueues = null; 
 	 FileSystem fileSystem=null;
@@ -25,6 +26,7 @@ public class ExecutorJob {
 	 AtomicInteger genfilecount;
 	 AtomicInteger upfilecount ;
 	 List<TaskInfo> tasks;
+	 GenFileHelper  genFileWork;
 	 
 	 public int getErrorrowslimit()
 	 {
@@ -127,6 +129,14 @@ public class ExecutorJob {
 		}
 	}
 	
+	public void addWorkThread(int nums)
+	{
+		if(this.genFileWork != null)
+		{
+			genFileWork.addGenThread(nums);
+		}
+	}
+	
 	public FileSegment createSingleFileSegment(int fileNo,long startid)
 	{
 		 FileSegment segement = new FileSegment();
@@ -152,7 +162,7 @@ public class ExecutorJob {
 	
 	private void run(int startpos)
 	{
-		 GenFileHelper  genFileWork = new GenFileHelper(this);
+		 genFileWork = new GenFileHelper(this);
 		 genFileWork.run(  config);		
 		 StringBuilder errorinfo = new StringBuilder();
 //		 int pos = 0;

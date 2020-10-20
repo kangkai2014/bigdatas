@@ -3,22 +3,25 @@ package org.frameworkset.bigdata.imp;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.frameworkset.bigdata.imp.monitor.ImpStaticManager;
 import org.frameworkset.bigdata.util.DBHelper;
 import org.frameworkset.event.EventType;
 import org.frameworkset.event.NotifiableFactory;
 import org.frameworkset.spi.BaseApplicationContext;
 import org.frameworkset.spi.SOAApplicationContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.frameworkset.util.SimpleStringUtil;
 
 public class Imp {
-	private static Logger log = Logger.getLogger(Imp.class);
+	private static Logger log = LoggerFactory.getLogger(Imp.class);
 	private static File appdir;
 	private static Map<String,String> parserParams(String params_)
 	{
@@ -55,6 +58,7 @@ public class Imp {
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_jobstop_commond);
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_stopdatasource_commond);
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_reassigntasks_request_commond);
+		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_addworkthread_commond);
 		
 		NotifiableFactory.getNotifiable().addListener(impStaticManager, monitorEventTypes);
 		org.frameworkset.remote.EventUtils.init();
@@ -78,6 +82,7 @@ public class Imp {
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_jobstop_commond);
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_stopdatasource_commond);
 		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_reassigntasks_request_commond);
+		monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_addworkthread_commond);
 		NotifiableFactory.getNotifiable().addListener(impStaticManager, monitorEventTypes);
 		org.frameworkset.remote.EventUtils.init();
 		log.info("初始化分布式事件模块完毕！");
@@ -117,8 +122,9 @@ public class Imp {
 			
 			monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_jobstop_commond);
 			monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_stopdatasource_commond);
-			monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_reassigntasks_request_commond);
 			
+			monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_reassigntasks_request_commond);
+			monitorEventTypes.add(HDFSUploadData.hdfs_upload_monitor_addworkthread_commond);
 			NotifiableFactory.getNotifiable().addListener(impStaticManager, monitorEventTypes);
 			org.frameworkset.remote.EventUtils.init();
 			log.info("初始化分布式事件模块完毕！");
@@ -278,5 +284,47 @@ public class Imp {
 	{
 		return Imp.getImpStaticManager().clearJobStatic(jobname, hostName);
 	}
+	
+	 public static boolean dateRange(String pktype)
+	 {
+		 return pktype != null && pktype.equals("date"); 
+	 }
+	 
+	 public static boolean timestampRange(String pktype)
+	 {
+		 return pktype != null && pktype.equals("timestamp"); 
+	 }
+	 
+	 public static boolean numberRange(String pktype)
+	 {
+		 return pktype == null || pktype.equals("number"); 
+	 }
+	 
+	 
+	 public static Date addDays(Date startdate,int days,String pkType)
+	 {
+		 
+		   java.util.Calendar c = java.util.Calendar.getInstance();
+			c.setTime(startdate);
+			c.add(Calendar.DAY_OF_MONTH, days);
+			return  Imp.getDateTime(pkType, c.getTimeInMillis());
+	 }
+	 public static Date getDateTime(String pktype,long time)
+	 {
+		 if(dateRange(pktype))
+		 {
+			return new java.sql.Timestamp(time) ;
+		 }
+		 else
+		 {
+			 return new java.sql.Timestamp(time) ;
+		 }
+	 }
+	 
+	 public static boolean reachend(Date endoffset,Date end)
+	 {
+		 boolean reachend = endoffset.after(end) || endoffset.compareTo(end) == 0;
+		 return reachend;
+	 }
 
 }

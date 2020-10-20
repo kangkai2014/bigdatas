@@ -8,11 +8,12 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HDFSServer {
 	private static Map<String,FileSystem>  FileSystems = new HashMap<String,FileSystem>();
-	 private static Logger log = Logger.getLogger(HDFSServer.class);
+	 private static Logger log = LoggerFactory.getLogger(HDFSServer.class);
 	public static FileSystem getFileSystem(String hadoop)
 	{
 		if(hadoop == null)
@@ -34,10 +35,10 @@ public class HDFSServer {
 				
 				UserGroupInformation user_ = null;
 				try {
-					log.info("连接hdfs服务器："+hadoop + " use user[root].");
-				 	user_ = UserGroupInformation.getBestUGI(null, "root");
-					UserGroupInformation.setLoginUser(user_);
-					 
+//					log.info("连接hdfs服务器："+hadoop + " use user[root].");
+//				 	user_ = UserGroupInformation.getBestUGI(null, "root");
+//					UserGroupInformation.setLoginUser(user_);
+//					 
 					 
 					URI uri = new URI(hadoop);
 					 
